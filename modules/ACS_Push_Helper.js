@@ -212,8 +212,8 @@ ACSpush.prototype.queryNewACSuser = function(params) {"use strict";
     // Checks for device simulator on iOS
     if (Ti.Platform.model === 'Simulator') {
         Ti.API.warn(' ********* Simulator Detected  - setting predefined token ******** ');
-        params.username = '8fe33df3e1a900a8785313164ed6cd8ffca31106b0d9a73181732d1338003bce'// default virtual TEST device ID
-        this.deviceToken = '8fe33df3e1a900a8785313164ed6cd8ffca31106b0d9a73181732d1338003bce';
+        params.username = '943867593475934857934859743'// default virtual TEST device ID
+        this.deviceToken = '943867593475934857934859743';
     }
 
     // requires device token to be present to run this routine.
