@@ -72,7 +72,7 @@ ACSpush.prototype.returnPushPayload = function() {"use strict";
 };
 
 ACSpush.prototype.getDeviceToken = function(params) {"use strict";
-    Ti.API.info('Get Device Token');
+    Ti.API.warn(' ****** getDeviceToken ****** ');
     var successCallback, errorCallback, messageCallback;
     var that = this;
     // Device token registraton Callbacks
@@ -148,9 +148,9 @@ ACSpush.prototype.getDeviceToken = function(params) {"use strict";
     };
     // Device Registration calls for both platforms
     if (!isAndroid) {
-        if(Ti.Platform.model === 'Simulator'){
+        if (Ti.Platform.model === 'Simulator') {
             Ti.API.warn(' ********* Simulator Detected ******** ');
-            
+
             params.callback();
             return;
         }
@@ -208,22 +208,22 @@ ACSpush.prototype.queryNewACSuser = function(params) {"use strict";
     var that = this;
     // Looking for user with device token as username
     Ti.API.info('queryNewACSuser: ' + JSON.stringify(params));
-    
+
     // Checks for device simulator on iOS
-    if(Ti.Platform.model === 'Simulator'){
+    if (Ti.Platform.model === 'Simulator') {
         Ti.API.warn(' ********* Simulator Detected  - setting predefined token ******** ');
-        params.username = '8fe33df3e1a900a8785313164ed6cd8ffca31106b0d9a73181732d1338003bce' // default virtual TEST device ID
+        params.username = '8fe33df3e1a900a8785313164ed6cd8ffca31106b0d9a73181732d1338003bce'// default virtual TEST device ID
         this.deviceToken = '8fe33df3e1a900a8785313164ed6cd8ffca31106b0d9a73181732d1338003bce';
     }
-    
+
     // requires device token to be present to run this routine.
-    
-    if(params.username !== null) {
+
+    if (params.username !== null) {
         var queryUsername = params.username.toLowerCase();
     } else {
         queryUsername = null;
     }
-    
+
     Cloud.Users.query({
         where : {
             "username" : queryUsername
@@ -253,14 +253,14 @@ ACSpush.prototype.showLoggedInACSuser = function(params) {
             that.loggedInToACS = true;
             var user = e.users[0];
             Ti.API.warn('ACS USer logged in: ' + that.loggedInToACS + ', id: ' + user.id + ' ' + 'first name: ' + user.first_name + ' ' + 'last name: ' + user.last_name);
-            if(params.callback !== undefined){
+            if (params.callback !== undefined) {
                 params.callback();
             }
-            
+
         } else {
             that.loggedInToACS = false;
             Ti.API.error('Error: ' + ((e.error && e.message) || JSON.stringify(e)));
-            if(params.callback !== undefined){
+            if (params.callback !== undefined) {
                 params.callback();
             }
         }
@@ -471,12 +471,57 @@ ACSpush.prototype.sendPushNotification = function(params) {
 
 };
 
-ACSpush.prototype.getAppBotCredentials = function() {
-    this.acsUser = configs.appBotCredentials();
+ACSpush.prototype.loginUser = function() {
+    var that = this;
+    Ti.API.warn(' ********* loginUser - callback ******** ');
+    Ti.API.warn(' ********* Login user to ACS - ' + that.createNewUser + ' ******** ');
+    that.loginUserToACS();
 };
 
-ACSpush.prototype.loginAppBot = function() {
+ACSpush.prototype.queryCallback = function() {
+    Ti.API.warn(' ********* queryCallback - callback ******** ');
+    if (this.createNewUser) {
+        Ti.API.warn(' ********* Need to create a new ACS user account: ' + this.createNewUser + ' ******** ');
+        this.createUserAccount({
+            callback : this.loginUser
+        });
+    } else {
+        this.loginUser();
+    }
+};
 
+ACSpush.prototype.loginCallback = function() {
+    Ti.API.warn(' ********* loginCallback - callback ******** ');
+    this.deviceToken = Ti.App.Properties.getString('deviceToken');
+    /**
+     * Checks to see if the logged in state is true, after a small delay for network check,
+     * this ideally needs to be asynchronous, but the code will need refactoring for that
+     */
+
+    if (!this.loggedInToACS) {
+        Ti.API.warn(' ********* This device is NOT Logged into ACS ******** ');
+        Ti.API.warn(' ********* About to Query ACS userbase against this device ******** ');
+
+        this.queryNewACSuser({
+            username : this.deviceToken,
+            callback : this.queryCallback
+        });
+
+    } else {
+        Ti.API.warn(' ********* User Logged IN true - no need to create new account ******** ');
+    }
+};
+
+ACSpush.prototype.deviceCallback = function() {
+    var that=this;
+    Ti.API.warn(' ********* getDeviceToken - callback ******** ');
+    /**
+     * Performs checks to see if the device has a token and if not creates one, storing the value
+     * into persistent storage.
+     */
+    that.getDeviceToken({
+        callback : that.loginCallback
+    });
 };
 
 ACSpush.prototype.checkNetwork = function() {"use strict";

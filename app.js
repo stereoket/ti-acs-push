@@ -8,16 +8,16 @@ Ti.App.Properties.setBool('acs-init', true);
 var acs_ph = require('/modules/ACS_Push_Helper');
 var ACS = new acs_ph.ACSpush();
 
-var loginUser = function() {
-    Ti.API.warn(' ********* Login Callback ******** ');
+function loginUser() {
+    Ti.API.warn(' ********* loginUser - callback ******** ');
     Ti.API.warn(' ********* Login user to ACS - ' + ACS.createNewUser + ' ******** ');
     ACS.loginUserToACS();
 };
 
 // probably needs renaming
 
-var queryCallback = function() {
-    Ti.API.warn(' ********* Query Callback ******** ');
+function queryCallback() {
+    Ti.API.warn(' ********* queryCallback - callback ******** ');
     if (ACS.createNewUser) {
         Ti.API.warn(' ********* Need to create a new ACS user account: ' + ACS.createNewUser + ' ******** ');
         ACS.createUserAccount({
@@ -28,8 +28,8 @@ var queryCallback = function() {
     }
 };
 
-var loginCallback = function(inparam) {
-    Ti.API.warn(' ********* Login Callback ******** ');
+function loginCallback() {
+    Ti.API.warn(' ********* loginCallback - callback ******** ');
     ACS.deviceToken = Ti.App.Properties.getString('deviceToken');
     /**
      * Checks to see if the logged in state is true, after a small delay for network check,
@@ -39,8 +39,6 @@ var loginCallback = function(inparam) {
     if (!ACS.loggedInToACS) {
         Ti.API.warn(' ********* This device is NOT Logged into ACS ******** ');
         Ti.API.warn(' ********* About to Query ACS userbase against this device ******** ');
-
-        Ti.API.warn(' ********* Setting up callbacks ******** ');
 
         ACS.queryNewACSuser({
             username : ACS.deviceToken,
@@ -52,13 +50,12 @@ var loginCallback = function(inparam) {
     }
 };
 
-var deviceCallback = function() {
-    Ti.API.warn(' ********* Device Callback ******** ');
+function getDeviceToken() {
+    Ti.API.warn(' ********* getDeviceToken - callback ******** ');
     /**
      * Performs checks to see if the device has a token and if not creates one, storing the value
      * into persistent storage.
      */
-
     ACS.getDeviceToken({
         callback : loginCallback
     });
@@ -69,5 +66,5 @@ var deviceCallback = function() {
  * First checking to see if the user is logged into Appcelerator Cloud Services.
  */
 ACS.showLoggedInACSuser({
-    callback : deviceCallback
+    callback : getDeviceToken
 });
