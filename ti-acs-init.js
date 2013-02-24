@@ -29,7 +29,10 @@
          Ti.API.warn('********* This device is NOT Logged into ACS ******** ');
          Ti.API.warn('********* About to Query ACS userbase against this device ******** ');
          ACS.queryNewACSuser({
-             username : ACS.deviceToken
+			username : ACS.deviceToken,
+			callback : function(){
+				alert('Create a new user? ' + ACS.createNewUser)
+			}
          });
 
          setTimeout(function() {
