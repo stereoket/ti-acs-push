@@ -1,3 +1,3 @@
-var isAndroid = (Ti.Platform.osname !== "android") ? false : true;
+var android = (Ti.Platform.osname !== "android") ? false : true;
 
-exports.isAndroid = isAndroid;
+exports.android = android;

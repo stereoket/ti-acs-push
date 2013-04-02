@@ -1,6 +1,6 @@
-var configs = require('modules/Config'), isAndroid = configs.isAndroid, CloudPush, Cloud;
+var configs = require('modules/Config'), ANDROID = configs.android, CloudPush, Cloud;
 Cloud = require('ti.cloud');
-if (isAndroid) {
+if (ANDROID) {
     CloudPush = require('ti.cloudpush');
 }
 /**
@@ -110,7 +110,7 @@ ACSpush.prototype.getDeviceToken = function(params) {"use strict";
         };
 
         // iOS processing of payload
-        if (!isAndroid) {
+        if (!ANDROID) {
 
             title = (that.payload.title !== undefined) ? that.payload.title : that.pushTXT.alertTitle;
 
@@ -147,7 +147,7 @@ ACSpush.prototype.getDeviceToken = function(params) {"use strict";
         }
     };
     // Device Registration calls for both platforms
-    if (!isAndroid) {
+    if (!ANDROID) {
         if (Ti.Platform.model === 'Simulator') {
             Ti.API.warn(' ********* Simulator Detected ******** ');
 
@@ -356,7 +356,7 @@ ACSpush.prototype.subscribeToPush = function(params) {
         params.channel = 'general';
     }
     // Android Devices need to enable with alternative module, this needs its own method
-    if (isAndroid) {
+    if (ANDROID) {
         CloudPush.enabled = true;
         CloudPush.setShowTrayNotification = true;
     }
@@ -364,7 +364,7 @@ ACSpush.prototype.subscribeToPush = function(params) {
     Cloud.PushNotifications.subscribe({
         channel : params.channel,
         device_token : this.deviceToken,
-        type : (isAndroid) ? 'android' : 'ios'
+        type : (ANDROID) ? 'android' : 'ios'
     }, function(f) {
         if (f.success) {
             Ti.API.log('Subscribed to ACS Push Notification: ' + JSON.stringify(f));
@@ -414,7 +414,7 @@ ACSpush.prototype.unsubscribePushChannel = function(params) {"use strict";
     Cloud.PushNotifications.unsubscribe({
         channel : params.channel,
         device_token : this.deviceToken,
-        type : (isAndroid) ? 'android' : 'ios'
+        type : (ANDROID) ? 'android' : 'ios'
     }, function(f) {
         if (f.success) {
             Ti.API.log('Unsubscribed Push Notification from Channel: ' + JSON.stringify(f));
