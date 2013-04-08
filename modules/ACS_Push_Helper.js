@@ -580,6 +580,70 @@ ACSpush.prototype.subscribeToPush = function (params) {
     }
 };
 
+/**
+ * Unsubscribe current device from a specific channel
+ * @param {Object} params Subscirption properties
+ * @param {String} params.channel - Channel to subscribe user to
+ * @param {String} params.deviceToken - Device Token passed in
+ */
+ACSpush.prototype.unsubscribePushChannel = function (params) {
+    "use strict";
+    var that = this,
+        pnt = false;
+    this._checkCallbacks(params, "unsubscribePushChannel()");
+
+    if (params.channel === undefined) {
+        params.channel = defaultChannelName;
+    }
+
+    // Network check prior to making the ACS call
+    if (!this._checkNetwork()) {
+        log("ERROR", "Network Error Check");
+        params.error({
+            message: "Could not fire Cloud.PushNotifications.unsubscribe in unsubscribePushChannel() ACS_PH - due to network issue"
+        });
+        return false;
+    }
+
+
+    Cloud.PushNotifications.unsubscribe({
+        channel: params.channel,
+        device_token: this.deviceToken,
+        type: (ANDROID) ? 'android' : 'ios'
+    }, unsunscribeCallback);
+
+    function unsunscribeCallback(f) {
+        if (f.success) {
+            that.unsubscribeToPushResponse = f;
+            that.subscribedChannels = that.returnSubscribedChannels();
+            var l = that.subscribedChannels.length,
+                i;
+            for (i = 0; i < l; i += 1) {
+                if (that.subscribedChannels[i].channel === params.channel) {
+                    log("warn", '** UNSUBSCRIBE CHANNEL - Looping channel list property');
+                    pnt = true;
+                    that.subscribedChannels[i].state = false;
+                    Ti.App.Properties.setList('subscribedChannels', that.subscribedChannels);
+                }
+                if (i === l - 1 && !pnt) {
+                    log("warn",'** UNSUBSCRIBE CHANNEL - Could not find key, asuming new channel being added:' + params.channel);
+                    that.subscribedChannels.push({
+                        channel: params.channel,
+                        state: false
+                    });
+                    Ti.App.Properties.setList('subscribedChannels', that.subscribedChannels);
+                }
+            }
+            params.success();
+        } else {
+            params.error({
+                message: "ACS_PH error unsubscribing from channel: " + JSON.stringify(e)
+            });
+        }
+    }
+    return;
+};
+
 
 /**
  * Helper method to get a list & state of persistent push channels in the ACS system
@@ -654,56 +718,7 @@ ACSpush.prototype.logUserOutOfACS = function () {
 };
 
 
-/**
- * Unsubscribe current device from a specific channel
- * @param {Object} params Subscirption properties
- * @param {String} params.channel - Channel to subscribe user to
- * @param {String} params.deviceToken - Device Token passed in
- */
-ACSpush.prototype.unsubscribePushChannel = function (params) {
-    "use strict";
-    var that = this,
-        pnt = false;
-    Ti.API.info(JSON.stringify(params) + ' passed into method');
-    if (params.channel === undefined) {
-        params.channel = 'general';
-    }
 
-    Cloud.PushNotifications.unsubscribe({
-        channel: params.channel,
-        device_token: this.deviceToken,
-        type: (ANDROID) ? 'android' : 'ios'
-    }, function (f) {
-        if (f.success) {
-            Ti.API.warn('Unsubscribed Push Notification from Channel: ' + JSON.stringify(f));
-            that.unsubscribeToPushResponse = f;
-            that.subscribedChannels = that.returnSubscribedChannels();
-            var l = that.subscribedChannels.length,
-                i;
-            for (i = 0; i < l; i += 1) {
-                Ti.API.warn('Loop: ' + i + ' of ' + l);
-                if (that.subscribedChannels[i].channel === params.channel) {
-                    Ti.API.warn('** UNSUBSCRIBE CHANNEL - Looping channel list property');
-                    pnt = true;
-                    that.subscribedChannels[i].state = false;
-                    Ti.App.Properties.setList('subscribedChannels', that.subscribedChannels);
-                }
-                if (i === l - 1 && !pnt) {
-                    Ti.API.warn('** UNSUBSCRIBE CHANNEL - Could not find key, asuming new channel being added:' + params.channel);
-                    that.subscribedChannels.push({
-                        channel: params.channel,
-                        state: false
-                    });
-                    Ti.App.Properties.setList('subscribedChannels', that.subscribedChannels);
-                }
-            }
-
-        } else {
-            Ti.API.error('Error:\n' + ((f.error && f.message) || JSON.stringify(f)))
-        }
-    });
-    return;
-};
 /**
  * Send push notifications out through the ACS system, payload and limitations
  * @param {Object} params paramateres for payload and push properties
